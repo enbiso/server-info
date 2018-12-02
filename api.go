@@ -68,16 +68,13 @@ func getTempInfo() []TempInfo {
 	temps := []TempInfo{}
 	temp := TempInfo{}
 	for _, tStat := range temStats {
-		sensor := tStat.SensorKey[:strings.LastIndexByte(tStat.SensorKey, '_')]
-		if temp.Sensor != sensor {
+		if strings.HasSuffix(tStat.SensorKey, "input") {
 			if temp.Sensor != "" {
 				temps = append(temps, temp)
 			}
 			temp = TempInfo{
-				Sensor: sensor,
+				Sensor: tStat.SensorKey[:strings.LastIndexByte(tStat.SensorKey, '_')],
 			}
-		}
-		if strings.HasSuffix(tStat.SensorKey, "input") {
 			temp.Temperature = tStat.Temperature
 		}
 		if strings.HasSuffix(tStat.SensorKey, "max") {
@@ -86,6 +83,10 @@ func getTempInfo() []TempInfo {
 		if strings.HasSuffix(tStat.SensorKey, "crit") {
 			temp.Critical = tStat.Temperature
 		}
+	}
+	// Add the last temp
+	if temp.Sensor != "" {
+		temps = append(temps, temp)
 	}
 	return temps
 }
