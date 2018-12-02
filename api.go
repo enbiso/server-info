@@ -66,24 +66,25 @@ type TempInfo struct {
 func getTempInfo() []TempInfo {
 	temStats, _ := host.SensorsTemperatures()
 	temps := []TempInfo{}
-	var temp *TempInfo
+	temp := TempInfo{}
 	for _, tStat := range temStats {
-		if strings.HasSuffix(tStat.SensorKey, "input") {
-			if temp != nil {
-				temps = append(temps, *temp)
+		sensor := strings.Replace(tStat.SensorKey, "_input", "", -1)
+		if temp.Sensor != sensor {
+			if temp.Sensor != "" {
+				temps = append(temps, temp)
 			}
-			temp = &TempInfo{
-				Temperature: tStat.Temperature,
-				Sensor:      strings.Replace(tStat.SensorKey, "_input", "", -1),
+			temp = TempInfo{
+				Sensor: sensor,
 			}
 		}
-		if temp != nil {
-			if strings.HasSuffix(tStat.SensorKey, "max") {
-				temp.High = tStat.Temperature
-			}
-			if strings.HasSuffix(tStat.SensorKey, "crit") {
-				temp.Critical = tStat.Temperature
-			}
+		if strings.HasSuffix(tStat.SensorKey, "input") {
+			temp.Temperature = tStat.Temperature
+		}
+		if strings.HasSuffix(tStat.SensorKey, "max") {
+			temp.High = tStat.Temperature
+		}
+		if strings.HasSuffix(tStat.SensorKey, "crit") {
+			temp.Critical = tStat.Temperature
 		}
 	}
 	return temps
