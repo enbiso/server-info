@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/labstack/echo"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
@@ -54,16 +56,32 @@ func getSwapInfo() MemInfo {
 type TempInfo struct {
 	Sensor      string  `json:"sensor"`
 	Temperature float64 `json:"temperature"`
+	High        float64 `json:"high"`
+	Critical    float64 `json:"critical"`
 }
 
 func getTempInfo() []TempInfo {
 	temStats, _ := host.SensorsTemperatures()
 	temps := []TempInfo{}
+	var temp *TempInfo
 	for _, tStat := range temStats {
-		temps = append(temps, TempInfo{
-			Sensor:      tStat.SensorKey,
-			Temperature: tStat.Temperature,
-		})
+		if strings.HasSuffix(tStat.SensorKey, "input") {
+			if temp != nil {
+				temps = append(temps, *temp)
+			}
+			temp = &TempInfo{
+				Temperature: tStat.Temperature,
+				Sensor:      strings.Replace(tStat.SensorKey, "_input", "", -1),
+			}
+		}
+		if temp != nil {
+			if strings.HasSuffix(tStat.SensorKey, "max") {
+				temp.High = tStat.Temperature
+			}
+			if strings.HasSuffix(tStat.SensorKey, "crit") {
+				temp.Critical = tStat.Temperature
+			}
+		}
 	}
 	return temps
 }
