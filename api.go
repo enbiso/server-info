@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo"
+	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 )
@@ -13,6 +14,7 @@ type ServerInfo struct {
 	Mem   MemInfo    `json:"mem"`
 	Swap  MemInfo    `json:"swap"`
 	Temps []TempInfo `json:"temperatures"`
+	CPUs  []CPUInfo  `json:"cpus"`
 }
 
 func executeAPI(addr string) {
@@ -22,6 +24,7 @@ func executeAPI(addr string) {
 			Mem:   getMemInfo(),
 			Swap:  getSwapInfo(),
 			Temps: getTempInfo(),
+			CPUs:  getCPUInfo(),
 		})
 	})
 	e.Logger.Fatal(e.Start(addr))
@@ -31,7 +34,7 @@ func executeAPI(addr string) {
 type MemInfo struct {
 	Total       uint64  `json:"total"`
 	Used        uint64  `json:"used"`
-	UsedPercent float64 `json:"usedPercentage"`
+	UsedPercent float64 `json:"usedPercent"`
 }
 
 func getMemInfo() MemInfo {
@@ -88,4 +91,24 @@ func getTempInfo() []TempInfo {
 
 // CPUInfo structure
 type CPUInfo struct {
+	Name        string  `json:"Name"`
+	User        float64 `json:"user"`
+	System      float64 `json:"system"`
+	Idle        float64 `json:"idle"`
+	UsedPercent float64 `json:"usedPercent"`
+}
+
+func getCPUInfo() []CPUInfo {
+	cs, _ := cpu.Times(true)
+	cInfos := []CPUInfo{}
+	for _, c := range cs {
+		cInfos = append(cInfos, CPUInfo{
+			Name:        c.CPU,
+			User:        c.User,
+			System:      c.System,
+			Idle:        c.Idle,
+			UsedPercent: ((c.User + c.System) / (c.User + c.System + c.Idle)) * 100,
+		})
+	}
+	return cInfos
 }
