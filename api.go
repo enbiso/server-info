@@ -68,7 +68,7 @@ func getTempInfo() []TempInfo {
 	temps := []TempInfo{}
 	temp := TempInfo{}
 	for _, tStat := range temStats {
-		sensor := strings.Replace(tStat.SensorKey, "_input", "", -1)
+		sensor := tStat.SensorKey[:strings.LastIndexByte(tStat.SensorKey, '_')]
 		if temp.Sensor != sensor {
 			if temp.Sensor != "" {
 				temps = append(temps, temp)
